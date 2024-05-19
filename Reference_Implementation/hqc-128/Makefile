@@ -1,24 +1,29 @@
-ifeq ($(ROOT),)
-ROOT:=.
-endif
 
-CPP=g++
+CC:=gcc
+RNG_FLAGS:=-Wno-unused-but-set-variable -Wno-unused-parameter -Wno-sign-compare
+CFLAGS:=-O3 -std=c99 -mavx -mavx2 -pedantic ${RNG_FLAGS} 
 
-CPP_FLAGS:=-O3 -Wall -Wextra -Wpedantic -Wvla -Wredundant-decls 
+HASH_SRC:=lib/hash/hash.c
+HASH_INCLUDE:=-I lib/hash -lcrypto
 
-SHA3_SRC:=$(ROOT)/lib/fips202/fips202.c
-SHA3_INCLUDE:=-I $(ROOT)/lib/fips202
+RNG_SRC:=lib/rng/rng.c
+RNG_INCLUDE:=-I lib/rng
+ 
+SRC:=src/
+INCLUDE:=-I src/
+LIB:=$(HASH_INCLUDE) $(RNG_INCLUDE)
 
-SRC:=$(ROOT)/src/
-INCLUDE:=-I $(ROOT)/src -lntl -lgf2x -lgmp -pthread
-LIB:=$(SHA3_INCLUDE)
+#MAIN_HQC:=src/main_hqc.c
+MAIN_KAT:=src/main_kat.c
+MAIN_SERVER:=src/server.c
+MAIN_CLIENT:=src/client.c
+MAIN_TEST:=src/test.c
+MAIN_SERVER2:=src/server2.c
+MAIN_CLIENT2:=src/client2.c
 
-MAIN_HQC:=$(ROOT)/src/main_hqc.cpp
-MAIN_KAT:=$(ROOT)/src/main_kat.c
-
-HQC_OBJS:=vector.o reed_muller.o reed_solomon.o fft.o gf.o gf2x.o code.o parsing.o hqc.o kem.o shake_ds.o shake_prng.o
-HQC_OBJS_VERBOSE:=vector.o reed_muller.o reed_solomon-verbose.o fft.o gf.o gf2x.o code-verbose.o parsing.o hqc-verbose.o kem-verbose.o shake_ds.o shake_prng.o
-LIB_OBJS:= fips202.o
+HQC_OBJS:=vector.o repetition.o bch.o gf2x_avx2.o tensor.o parsing.o hqc.o kem.o
+HQC_OBJS_VERBOSE:=vector.o repetition.o bch-verbose.o gf2x_avx2.o tensor-verbose.o parsing.o hqc-verbose.o kem-verbose.o 
+LIB_OBJS:= hash.o rng.o
 
 BIN:=bin
 BUILD:=bin/build
@@ -28,29 +33,54 @@ folders:
 	@echo -e "\n### Creating folders\n"
 	mkdir -p $(BUILD)
 
-fips202.o: | folders
-	@/bin/echo -e "\n### Compiling fips202"
-	$(CPP) $(CFLAGS) -c $(SHA3_SRC) $(SHA3_INCLUDE) -o $(BUILD)/$@
+hash.o: folders
+	@echo -e "\n### Compiling $@ (wrapper around openssl SHA512 implementation)\n"	
+	$(CC) $(CFLAGS) -c $(HASH_SRC) $(HASH_INCLUDE) -o $(BUILD)/$@
 
-%.o: $(SRC)/%.cpp | folders
-	@/bin/echo -e "\n### Compiling $@"
-	$(CPP) $(CPP_FLAGS) -c $< $(INCLUDE) $(LIB) -o $(BUILD)/$@
+rng.o: folders
+	@echo -e "\n### Compiling NIST rng.o\n"	
+	$(CC) -O3 -c $(RNG_SRC) $(RNG_INCLUDE) -o $(BUILD)/$@
 
-%-verbose.o: $(SRC)/%.cpp | folders
+
+
+%.o: $(SRC)/%.c | folders
+	@echo -e "\n### Compiling $@\n"
+	$(CC) $(CFLAGS) -c $< $(INCLUDE) $(LIB) -o $(BUILD)/$@ 
+
+%-verbose.o: $(SRC)/%.c | folders
 	@echo -e "\n### Compiling $@ (verbose mode)\n"
-	$(CPP) $(CPP_FLAGS) -c $< $(INCLUDE) $(LIB) -D VERBOSE -o $(BUILD)/$@
+	$(CC) $(CFLAGS) -c $< $(INCLUDE) $(LIB) -D VERBOSE -o $(BUILD)/$@
 
-hqc-128: $(HQC_OBJS) $(LIB_OBJS) | folders
-	@echo -e "\n### Compiling hqc-128\n"
-	$(CPP) $(CPP_FLAGS) $(MAIN_HQC) $(addprefix $(BUILD)/, $^) $(INCLUDE) $(LIB) -o $(BIN)/$@
 
-hqc-128-kat: $(HQC_OBJS) $(LIB_OBJS) | folders
-	@echo -e "\n### Compiling hqc-128 KAT\n"
-	$(CPP) $(CPP_FLAGS) $(MAIN_KAT) $(addprefix $(BUILD)/, $^) $(INCLUDE) $(LIB) -o $(BIN)/$@
 
-hqc-128-verbose: $(HQC_OBJS_VERBOSE) $(LIB_OBJS) | folders
-	@echo -e "\n### Compiling hqc-128 (verbose mode)\n"
-	$(CPP) $(CPP_FLAGS) $(MAIN_HQC) $(addprefix $(BUILD)/, $^) $(INCLUDE) $(LIB) -D VERBOSE -o $(BIN)/$@
+hqc-128-1: $(HQC_OBJS) $(LIB_OBJS)
+	@echo -e "\n### Compiling HQC-128-1\n"	
+	$(CC) $(CFLAGS) $(MAIN_SERVER) $(addprefix $(BUILD)/, $^) $(INCLUDE) $(LIB) -o $(BIN)/$@ 
+
+hqc-128-1-client: $(HQC_OBJS) $(LIB_OBJS)
+	@echo -e "\n### Compiling HQC-128-1\n"	
+	$(CC) $(CFLAGS) $(MAIN_CLIENT) $(addprefix $(BUILD)/, $^) $(INCLUDE) $(LIB) -o $(BIN)/$@ 
+
+hqc-128-1-test: $(HQC_OBJS) $(LIB_OBJS)
+	@echo -e "\n### Compiling HQC-128-1\n"	
+	$(CC) $(CFLAGS) $(MAIN_TEST) $(addprefix $(BUILD)/, $^) $(INCLUDE) $(LIB) -o $(BIN)/$@ 
+
+hqc-128-1-server2: $(HQC_OBJS) $(LIB_OBJS)
+	@echo -e "\n### Compiling HQC-128-1\n"	
+	$(CC) $(CFLAGS) $(MAIN_SERVER2) $(addprefix $(BUILD)/, $^) $(INCLUDE) $(LIB) -o $(BIN)/$@ 
+
+hqc-128-1-client2: $(HQC_OBJS) $(LIB_OBJS)
+	@echo -e "\n### Compiling HQC-128-1\n"	
+	$(CC) $(CFLAGS) $(MAIN_CLIENT2) $(addprefix $(BUILD)/, $^) $(INCLUDE) $(LIB) -o $(BIN)/$@
+
+hqc-128-1-kat: $(HQC_OBJS) $(LIB_OBJS)
+	@echo -e "\n### Compiling HQC-128-1 KAT\n"	
+	$(CC) $(CFLAGS) $(MAIN_KAT) $(addprefix $(BUILD)/, $^) $(INCLUDE) $(LIB) -o $(BIN)/$@
+
+hqc-128-1-verbose: $(HQC_OBJS_VERBOSE) $(LIB_OBJS)
+	@echo -e "\n### Compiling HQC-128-1 (verbose mode)\n"	
+	$(CC) $(CFLAGS) $(MAIN_HQC) $(addprefix $(BUILD)/, $^) $(INCLUDE) $(LIB) -D VERBOSE -o $(BIN)/$@ 
+
 
 
 clean:

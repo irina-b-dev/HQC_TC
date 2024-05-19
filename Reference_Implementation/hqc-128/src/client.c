@@ -19,6 +19,15 @@
 
 
 int main() {
+    unsigned char key1[SHARED_SECRET_BYTES];
+    unsigned char key2[SHARED_SECRET_BYTES];
+    unsigned char pk[PUBLIC_KEY_BYTES];
+    unsigned char ct[CIPHERTEXT_BYTES];
+
+    //FILE *fptr;
+    //fptr = fopen("public_key.txt", "r");
+    //fgets(pk, PUBLIC_KEY_BYTES, fptr);
+    //fclose(fptr);
 
     int sock;
     struct sockaddr_in server_addr;
@@ -49,7 +58,7 @@ int main() {
     }
 
     printf("Connected to server at 127.0.0.1:%d\n", PORT);
-
+    read(sock, pk, PUBLIC_KEY_BYTES);
     while (1) {
         printf("Enter message to send (or 'exit' to quit): ");
         fgets(message, BUFFER_SIZE, stdin);
@@ -58,8 +67,9 @@ int main() {
         if (strcmp(message, "exit") == 0) {
             break;
         }
+        crypto_kem_enc(ct, key1, pk, message);
 
-        send(sock, message, strlen(message), 0);
+        send(sock, ct, strlen(ct), 0);
         int bytes_received = read(sock, buffer, BUFFER_SIZE - 1);
         buffer[bytes_received] = '\0';
         printf("Received from server: %s\n", buffer);

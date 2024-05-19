@@ -1,15 +1,19 @@
+/**
+ * \file hqc.h
+ * \brief Functions of the HQC_PKE IND_CPA scheme
+ */
+
 #ifndef HQC_H
 #define HQC_H
 
-/**
- * @file hqc.h
- * @brief Functions of the HQC_PKE IND_CPA scheme
- */
-
-#include <stdint.h>
+#include "parameters.h"
+#include "vector.h"
+#include "tensor.h"
+#include "parsing.h"
+#include "gf2x_avx2.h"
 
 void hqc_pke_keygen(unsigned char* pk, unsigned char* sk);
-void hqc_pke_encrypt(uint64_t *u, uint64_t *v, uint64_t *m, unsigned char *theta, const unsigned char *pk);
-uint8_t hqc_pke_decrypt(uint64_t *m, uint8_t *sigma, const uint64_t *u, const uint64_t *v, const uint8_t *sk);
+void hqc_pke_encrypt(uint8_t* u, uint8_t* v, uint8_t* m, unsigned char* theta, const unsigned char* pk);
+void hqc_pke_decrypt(uint8_t* m, uint8_t* u, uint8_t* v, const unsigned char* sk);
 
 #endif
