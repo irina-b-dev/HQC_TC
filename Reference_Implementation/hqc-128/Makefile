@@ -20,6 +20,8 @@ MAIN_CLIENT:=src/client.c
 MAIN_TEST:=src/test.c
 MAIN_SERVER2:=src/server2.c
 MAIN_CLIENT2:=src/client2.c
+MAIN_BENCH1:=src/benchmark.c
+MAIN_BENCH2:=src/benchmark2.c
 
 HQC_OBJS:=vector.o repetition.o bch.o gf2x_avx2.o tensor.o parsing.o hqc.o kem.o
 HQC_OBJS_VERBOSE:=vector.o repetition.o bch-verbose.o gf2x_avx2.o tensor-verbose.o parsing.o hqc-verbose.o kem-verbose.o 
@@ -72,6 +74,14 @@ hqc-128-1-server2: $(HQC_OBJS) $(LIB_OBJS)
 hqc-128-1-client2: $(HQC_OBJS) $(LIB_OBJS)
 	@echo -e "\n### Compiling HQC-128-1\n"	
 	$(CC) $(CFLAGS) $(MAIN_CLIENT2) $(addprefix $(BUILD)/, $^) $(INCLUDE) $(LIB) -o $(BIN)/$@
+
+hqc-128-1-benchmark1: $(HQC_OBJS) $(LIB_OBJS)
+	@echo -e "\n### Compiling HQC-128-1\n"	
+	$(CC) $(CFLAGS) $(MAIN_BENCH1) $(addprefix $(BUILD)/, $^) $(INCLUDE) $(LIB) -o $(BIN)/$@
+
+hqc-128-1-benchmark2: $(HQC_OBJS) $(LIB_OBJS)
+	@echo -e "\n### Compiling HQC-128-1\n"	
+	$(CC) $(CFLAGS) $(MAIN_BENCH2) $(addprefix $(BUILD)/, $^) $(INCLUDE) $(LIB) -o $(BIN)/$@
 
 hqc-128-1-kat: $(HQC_OBJS) $(LIB_OBJS)
 	@echo -e "\n### Compiling HQC-128-1 KAT\n"	

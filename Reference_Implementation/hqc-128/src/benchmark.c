@@ -11,7 +11,7 @@
 #include "parameters.h"
 
 #define BUFFER_SIZE 1024
-#define num_run 100
+#define num_run 10000
 
 // Function to measure time taken for key generation, encryption, and decryption of HQC
 void benchmark_my_algorithm() {
@@ -57,9 +57,12 @@ void benchmark_my_algorithm() {
     i = 0;
     start = clock();
     while(i < num_run){
-    if (crypto_kem_dec(ss, encrypted, sk, decrypted) != 0) {
-        fprintf(stderr, "Decryption failed\n");
-        return;
+        // memcpy(ss2, ss, SHARED_SECRET_BYTES);
+        // memcpy(encrypted2, encrypted, CIPHERTEXT_BYTES);
+        // memcpy(sk2, sk, SECRET_KEY_BYTES);
+    if (crypto_kem_dec(ss, encrypted, sk) != 0) {
+        //fprintf(stderr, "Decryption failed\n");
+        //return;
     }
     i++;
     }

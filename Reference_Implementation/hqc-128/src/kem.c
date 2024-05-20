@@ -126,7 +126,7 @@ int crypto_kem_dec(unsigned char* ss, const unsigned char* ct, const unsigned ch
   uint8_t m[VEC_K_SIZE_BYTES] = {0};
   hqc_pke_decrypt(m, u, v, sk);
   
-  printf("%s", m);
+  //printf("%s", m);
   // Generating G function
   unsigned char diversifier_bytes[8];
   for(int i = 0; i < 8; ++i) {
